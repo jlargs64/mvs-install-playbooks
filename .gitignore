@@ -1,0 +1,25 @@
+# Mac
+.DS_Store
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Ansible artifacts
+*.retry
+*.log
+.ansible/
+.vault_pass
+.vault_password
+vault_pass.txt
+vault_password.txt
+.ansible_collections/
+collections/
+roles/downloaded/

@@ -1,0 +1,78 @@
+- name: Setup pi
+  hosts: preprod_pi
+  become: true
+  tasks:
+    - name: Verify connection to pi
+      ansible.builtin.ping:
+    - name: Update package cache (apt-get update)
+      apt:
+        update_cache: yes
+      tags: ["updates"]
+    - name: Upgrade packages (apt-get upgrade)
+      apt:
+        upgrade: dist
+      tags: ["updates"]
+
+- name: Setup Hercules TK5
+  hosts: preprod_pi
+  become: true
+  tasks:
+    - name: Download emulator files
+      ansible.builtin.get_url:
+        url: https://www.prince-webdesign.nl/images/downloads/mvs-tk5.zip
+        dest: /tmp/mvs-tk5.zip
+        mode: "0644"
+      tags: ["mvs_install"]
+    - name: Create MVS User
+      user:
+        name: "{{ mvs_user }}"
+        comment: "MVS TK5 System User"
+        home: "{{ mvs_install_dir }}/mvs-tk5"
+        shell: /bin/bash
+      tags: ["mvs_install"]
+    - name: Create MVS directory
+      ansible.builtin.file:
+        path: "{{ mvs_install_dir }}"
+        state: directory
+        mode: "0755"
+      tags: ["mvs_install"]
+    - name: Unzip MVS files
+      ansible.builtin.unarchive:
+        src: /tmp/mvs-tk5.zip
+        dest: /opt/
+        remote_src: true
+      tags: ["mvs_install"]
+    - name: Change ownership of MVS directory
+      file:
+        path: "{{ mvs_install_dir }}"
+        owner: "{{ mvs_user }}"
+        group: "{{ mvs_user }}"
+        recurse: yes
+    - name: Cleanup MVS zipped file from /tmp
+      ansible.builtin.file:
+        path: /tmp/mvs-tk5.zip
+        state: absent
+      tags: ["mvs_install"]
+    - name: Start MVS unattended mode
+      ansible.builtin.copy:
+        content: "CONSOLE\n"
+        dest: "{{ mvs_install_dir }}/unattended/mode"
+        mode: "0644"
+        become_user: "{{ mvs_user }}"
+    - name: Create systemd service for MVS
+      ansible.builtin.template:
+        src: mvs.service.j2
+        dest: /etc/systemd/system/mvs.service
+      notify: restart mvs
+    - name: Enable and start MVS service
+      ansible.builtin.systemd:
+        name: mvs
+        enabled: yes
+        state: started
+        daemon_reload: yes
+  handlers:
+    - name: restart mvs
+      ansible.builtin.systemd:
+        name: mvs
+        state: restarted
+        daemon_reload: yes

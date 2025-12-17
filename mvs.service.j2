@@ -1,0 +1,17 @@
+[Unit]
+Description=MVS 3.8j TK5 (Hercules Mainframe Emulator)
+After=network.target
+
+[Service]
+Type=simple
+User={{ mvs_user }}
+WorkingDirectory={{ mvs_install_dir }}
+ExecStart={{ mvs_install_dir }}/mvs
+Restart=on-failure
+RestartSec=10s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mvs-tk5
+
+[Install]
+WantedBy=multi-user.target
