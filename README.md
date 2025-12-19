@@ -1,7 +1,7 @@
-# Gameframe Pi Lite Playbooks
+# MVS Install Playbooks
 
 Ansible playbooks for deploying MVS 3.8j TK5 (Hercules Mainframe Emulator) on
-Raspberry Pi.
+any system as defined by your `inventory.ini` file.
 
 ## Prerequisites
 
