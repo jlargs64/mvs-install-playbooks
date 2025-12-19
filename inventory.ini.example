@@ -1,0 +1,7 @@
+[all:vars]
+ansible_connection="ssh"
+ansible_user="your-ssh-username"
+
+[preprod_pi]
+# Replace with your Raspberry Pi's IP address (e.g., Tailscale IP)
+# Example: 100.x.x.x

@@ -17,6 +17,11 @@
   hosts: preprod_pi
   become: true
   tasks:
+    - name: Stop any existing MVS service
+      ansible.builtin.systemd:
+        name: mvs
+        state: stopped
+      ignore_errors: true
     - name: Download emulator files
       ansible.builtin.get_url:
         url: https://www.prince-webdesign.nl/images/downloads/mvs-tk5.zip
@@ -30,12 +35,6 @@
         home: "{{ mvs_install_dir }}/mvs-tk5"
         shell: /bin/bash
       tags: ["mvs_install"]
-    - name: Create MVS directory
-      ansible.builtin.file:
-        path: "{{ mvs_install_dir }}"
-        state: directory
-        mode: "0755"
-      tags: ["mvs_install"]
     - name: Unzip MVS files
       ansible.builtin.unarchive:
         src: /tmp/mvs-tk5.zip
@@ -47,12 +46,19 @@
         path: "{{ mvs_install_dir }}"
         owner: "{{ mvs_user }}"
         group: "{{ mvs_user }}"
+        mode: "0755"
         recurse: yes
+      tags: ["mvs_install"]
     - name: Cleanup MVS zipped file from /tmp
       ansible.builtin.file:
         path: /tmp/mvs-tk5.zip
         state: absent
       tags: ["mvs_install"]
+    - name: Sync time with host system
+      ansible.builtin.lineinfile:
+        path: "{{ mvs_install_dir }}/conf/tk5.cnf"
+        line: "TODDRAG 1.0"
+        insertafter: EOF
     - name: Start MVS unattended mode
       ansible.builtin.copy:
         content: "CONSOLE\n"
