@@ -6,7 +6,7 @@
       ansible.builtin.ping:
     - name: Update package cache (apt-get update)
       apt:
-        update_cache: yes
+        update_cache: true
       tags: ["updates"]
     - name: Upgrade packages (apt-get upgrade)
       apt:
@@ -14,14 +14,17 @@
       tags: ["updates"]
 
 - name: Setup Hercules TK5
-  hosts: preprod_pi
+  hosts: tk5_pi
   become: true
   tasks:
     - name: Stop any existing MVS service
       ansible.builtin.systemd:
         name: mvs
         state: stopped
-      ignore_errors: true
+      failed_when: false
+      register: mvs_stop_result
+      changed_when:
+        mvs_stop_result.state is defined and mvs_stop_result.state == "stopped"
     - name: Download emulator files
       ansible.builtin.get_url:
         url: https://www.prince-webdesign.nl/images/downloads/mvs-tk5.zip
@@ -47,7 +50,7 @@
         owner: "{{ mvs_user }}"
         group: "{{ mvs_user }}"
         mode: "0755"
-        recurse: yes
+        recurse: true
       tags: ["mvs_install"]
     - name: Cleanup MVS zipped file from /tmp
       ansible.builtin.file:
@@ -57,7 +60,7 @@
     - name: Sync time with host system
       ansible.builtin.lineinfile:
         path: "{{ mvs_install_dir }}/conf/tk5.cnf"
-        line: "TODDRAG 1.0"
+        line: "TZOFFSET -0600"
         insertafter: EOF
     - name: Start MVS unattended mode
       ansible.builtin.copy:
@@ -69,16 +72,17 @@
       ansible.builtin.template:
         src: mvs.service.j2
         dest: /etc/systemd/system/mvs.service
+        mode: "0644"
       notify: restart mvs
     - name: Enable and start MVS service
       ansible.builtin.systemd:
         name: mvs
-        enabled: yes
+        enabled: true
         state: started
-        daemon_reload: yes
+        daemon_reload: true
   handlers:
     - name: restart mvs
       ansible.builtin.systemd:
         name: mvs
         state: restarted
-        daemon_reload: yes
+        daemon_reload: true
