@@ -1,5 +1,5 @@
 - name: Setup pi
-  hosts: preprod_pi
+  hosts: tk5_pi
   become: true
   tasks:
     - name: Verify connection to pi
@@ -23,8 +23,19 @@
         state: stopped
       failed_when: false
       register: mvs_stop_result
-      changed_when:
-        mvs_stop_result.state is defined and mvs_stop_result.state == "stopped"
+      changed_when: mvs_stop_result.state is defined and mvs_stop_result.state == "stopped"
+    - name: Create a directory
+      ansible.builtin.file:
+        path: /backups
+        state: directory
+        mode: "0755"
+        owner: "{{ mvs_user }}"
+        group: "{{ mvs_user }}"
+    - name: Create timestamped backup of DASD volumes
+      ansible.builtin.archive:
+        path: "{{ mvs_install_dir }}/dasd"
+        dest: "/backups/tk5-dasd-{{ ansible_date_time.iso8601_basic_short }}.tar.gz"
+        format: gz
     - name: Download emulator files
       ansible.builtin.get_url:
         url: https://www.prince-webdesign.nl/images/downloads/mvs-tk5.zip

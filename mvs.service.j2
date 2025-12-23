@@ -3,10 +3,11 @@ Description=MVS 3.8j TK5 (Hercules Mainframe Emulator)
 After=network.target
 
 [Service]
-Type=simple
+Type=forking
 User={{ mvs_user }}
 WorkingDirectory={{ mvs_install_dir }}
-ExecStart={{ mvs_install_dir }}/mvs
+ExecStart=/usr/bin/tmux new-session -d -s tk5 -c {{ mvs_install_dir }} '{{ mvs_install_dir }}/mvs'
+ExecStop=/usr/bin/tmux kill-session -t tk5
 Restart=on-failure
 RestartSec=10s
 StandardOutput=journal
